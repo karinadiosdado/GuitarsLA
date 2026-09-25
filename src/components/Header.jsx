@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 
-export default function Header({ cart, total }) {
+export default function Header({ cart, total,disminuirQuantity , aumentarQuantity, VaciarCart, eliminarCart }) {
 
     // logica
 
@@ -57,11 +57,12 @@ export default function Header({ cart, total }) {
                                                             ${guitar.price}
                                                         </td>
                                                         <td className="flex align-items-start gap-4">
-                                                            <button  type="button"  className="btn btn-dark" >   - </button> {guitar.quantity}
-                                                            <button    type="button"    className="btn btn-dark"   >+ </button>
+                                                            <button  type="button"  className="btn btn-dark"  onClick={()=>disminuirQuantity(guitar.id)} >   - </button>
+                                                             {guitar.quantity}
+                                                            <button    type="button"    className="btn btn-dark" onClick={()=>aumentarQuantity(guitar.id)}   >+ </button>
                                                         </td>
                                                         <td>
-                                                            <button className="btn btn-danger" type="button" >    X  </button>
+                                                            <button className="btn btn-danger" type="button"  onClick={()=>eliminarCart(guitar.id)} >    X  </button>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -70,7 +71,7 @@ export default function Header({ cart, total }) {
                                     )}
                                     {!isEmpty && ( <p className="text-end fw-bold">  Total: ${total} </p>
                                     )}
-                                    <button className="btn btn-dark w-100 mt-3 p-2">   Vaciar Carrito </button>
+                                    <button className="btn btn-dark w-100 mt-3 p-2"  onClick={VaciarCart}>   Vaciar Carrito </button>
                                 </div>
                             </div>
                         </nav>
