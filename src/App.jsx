@@ -1,141 +1,125 @@
-import { useState, useEffect } from "react";
-import Header from "./components/Header";
-import { db } from "./data/db";
-import Guitar from "./components/Guitar";
-
+import { useState, useEffect } from "react"
+import Guitar from "./components/Guitar"
+import Header from "./components/Header"
+import { db } from "./data/db"
 
 function App() {
-    const [data] = useState(db);
-    const [cart, setCart] = useState([]);
-    const [total, setTotal] = useState(0);
 
-    // Agregar guitarra al carrito
-    function handlerClick(item) {
-        const guitarExist = cart.findIndex(
-            (guitar) => guitar.id === item.id
-        );
-
-        if (guitarExist >= 0) {
-            const updatedCart = [...cart];
-            // Maximo 5 guitarras
-            if (updatedCart[guitarExist].quantity < 5) {
-                updatedCart[guitarExist].quantity++;
-                setCart(updatedCart);
-
-            }
-        } else {
-            const guitar = {
-                ...item,
-                quantity: 1
-            };
-            setCart([...cart, guitar]);
+    const initialCart = () => {
+        const localStorageCart = localStorage.getItem('cart');
+        try {
+            const parsed = localStorageCart ? JSON.parse(localStorageCart) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.error("Error al leer el carrito de localStorage:", error);
+            localStorage.removeItem('cart');
+            return [];
         }
     }
-    // Aumentar cantidad
-    function aumentarQuantity(id) {
-        const updatedCart = cart.map((guitar) => {
-            if (guitar.id === id && guitar.quantity < 5) {
-                return {
-                    ...guitar,
-                    quantity: guitar.quantity + 1
-                };
-            }
-            return guitar;
-        });
-        setCart(updatedCart);
+
+    const [data] = useState(db);
+    const [cart, setCart] = useState(initialCart);
+
+    useEffect(() => {
+        localStorage.setItem('cart', JSON.stringify(cart)); // guarda carrito convertido a string
+    }, [cart]);
+
+    const MIN_ITEMS = 1;
+    const MAX_ITEMS = 5;
+
+    function addToCart(item) {
+        const itemExist = cart.findIndex(guitar => guitar.id === item.id);
+        if (itemExist >= 0) {
+            if (cart[itemExist].quantity >= MAX_ITEMS) return
+            const updatedCart = [...cart];
+            updatedCart[itemExist] = {
+                ...updatedCart[itemExist],
+                quantity: updatedCart[itemExist].quantity + 1
+            };
+            setCart(updatedCart);
+        } else {
+            const newItem = { ...item, quantity: 1 };
+            setCart([...cart, newItem]);
+        }
     }
-
-
-    // Disminuir cantidad
-    function disminuirQuantity(id) {
-        const updatedCart = cart
-            .map((guitar) => {
-                if (guitar.id === id) {
+    function decreaseQuantity(id) {
+        const updateCart = cart.map(
+            (item) => {
+                if (item.id === id && item.quantity > MIN_ITEMS) {
                     return {
-                        ...guitar,
-                        quantity: guitar.quantity - 1
-                    };
+                        ...item,
+                        quantity: item.quantity - 1
+                    }
                 }
-                return guitar;
+                return item
             })
-            .filter((guitar) => guitar.quantity > 0);
-        setCart(updatedCart);
+        setCart(updateCart)
+    }
+    function increaseQuantity(id) {
+        const updateCart = cart.map(
+            (item) => {
+                if (item.id === id && item.quantity < MAX_ITEMS) {
+                    return {
+                        ...item,
+                        quantity: item.quantity + 1
+                    }
+                }
+                return item
+            })
+        setCart(updateCart)
+    }
+    function removeFromCart(id) {
+        setCart(prevcart => prevcart.filter(guitar => guitar.id !== id));
+
+    }
+    function clearCart() {
+        setCart([])
     }
 
 
-    // Eliminar una guitarra
-    function eliminarCart(id) {
-        const updatedCart = cart.filter(
-            (guitar) => guitar.id !== id
-        );
-        setCart(updatedCart);
-    }
 
 
-    // Vaciar carrito
-    function VaciarCart() {
-        setCart([]);
-    }
-
-
-    // Mostrar carrito actualizado
-    useEffect(() => {
-        console.log("Carrito actualizado:", cart);
-    }, [cart]);
-
-
-    // Calcular total
-    function calcularTotal() {
-        return cart.reduce((total, guitar) => {
-            return total + (guitar.quantity * guitar.price);
-        }, 0);
-
-    }
-
-
-    // Actualizar total
-    useEffect(() => {
-        setTotal(calcularTotal());
-    }, [cart]);
     return (
         <>
             <Header
                 cart={cart}
-                total={total}
-                aumentarQuantity={aumentarQuantity}
-                disminuirQuantity={disminuirQuantity}
-                eliminarCart={eliminarCart}
-                VaciarCart={VaciarCart}
-
+                decreaseQuantity={decreaseQuantity}
+                increaseQuantity={increaseQuantity}
+                removeFromCart={removeFromCart}
+                clearCart={clearCart}
             />
 
 
+
+
             <main className="container-xl mt-5">
-                <h2 className="text-center">
-                    Nuestra Colección
-                </h2>
+                <h2 className="text-center">Nuestra Colección</h2>
+
                 <div className="row mt-5">
                     {data.map((guitar) => (
+
                         <Guitar
                             key={guitar.id}
                             guitar={guitar}
-                            handlerClick={handlerClick}
+                            addToCart={addToCart}
+
+
                         />
+
+
+
                     ))}
+
                 </div>
             </main>
 
-
             <footer className="bg-dark mt-5 py-5">
                 <div className="container-xl">
-                    <p className="text-white text-center fs-4 mt-4 m-md-0">
-                        GuitarLA - Todos los derechos Reservados
-                    </p>
+                    <p className="text-white text-center fs-4 mt-4 m-md-0">GuitarLA - Todos los derechos Reservados</p>
                 </div>
             </footer>
         </>
-    );
+    )
 }
 
-
-export default App;
+export default App
